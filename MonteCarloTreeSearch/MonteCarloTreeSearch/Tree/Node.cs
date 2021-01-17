@@ -45,7 +45,7 @@ namespace MonteCarloTreeSearch.Tree
 
         public int GetNumberOfDescendants()
         {
-            return _children.Count + _children.Sum(GetNumberOfDescendants);
+            return GetNumberOfDescendants(this);
         }
 
         private int GetNumberOfDescendants(Node<T> node)
@@ -55,7 +55,7 @@ namespace MonteCarloTreeSearch.Tree
 
         public override string ToString()
         {
-            return $"{nameof(Children)} Objects: {_children.Count}, Descendant Objects: {GetNumberOfDescendants() - 2}, [{Value}]";
+            return $"{nameof(Children)} Objects: {_children.Count}, Descendant Objects: {GetNumberOfDescendants()}, [{Value}]";
         }
     }
 }

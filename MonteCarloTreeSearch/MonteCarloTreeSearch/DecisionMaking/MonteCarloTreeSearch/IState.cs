@@ -8,7 +8,7 @@ namespace MonteCarloTreeSearch.DecisionMaking.MonteCarloTreeSearch
     {
         public long Score { get; }
 
-        public long Visit { get; }
+        public long Visits { get; }
 
         public int RolloutActions { get; }
 
@@ -19,7 +19,7 @@ namespace MonteCarloTreeSearch.DecisionMaking.MonteCarloTreeSearch
         public string RolloutTerminatingStateDetails { get; }
 
         public int Rollout(List<IMonteCarloTreeSearchConstraint> constraints);
-        public List<IState> GetAllState();
+        public List<IState> GetAllStates();
         public List<IAction> GetAllActions();
         public void Backpropagation(int scoreToAdd, int visitsToAdd);
         public bool IsTerminatingState();
