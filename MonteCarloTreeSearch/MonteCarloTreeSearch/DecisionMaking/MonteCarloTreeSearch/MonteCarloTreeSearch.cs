@@ -35,9 +35,9 @@ namespace MonteCarloTreeSearch.DecisionMaking.MonteCarloTreeSearch
 
             ResetConstraints();
 
-            PreapreTree(root);
+            PrepareTree(root);
 
-            PerformAlgorith();
+            PerformAlgorithm();
 
             return GetAlgorithmResults();
         }
@@ -71,8 +71,36 @@ namespace MonteCarloTreeSearch.DecisionMaking.MonteCarloTreeSearch
             {
                 var bestLeafNode = TreeTraversal();
 
-                //Resume video here
+                if (bestLeafNode.Value.Visits > 0 && bestLeafNode.Value.IsTerminatingState() == false)
+                {
+                    var newStates = Expansion(bestLeafNode);
+                    bestLeafNode = newStates.First();
+                }
+
+                int rolloutValue = Rollout(bestLeafNode);
+                Backpropagation(bestLeafNode, rolloutValue, 1);
+
+                Iterations++;
             }
+        }
+
+        private int Rollout(INode<IState> state)
+        {
+            return state.Value.Rollout(_constraints);
+        }
+
+        private static void Backpropagation(INode<IState> state, int scoreToAdd, int visitsToAdd)
+        {
+            var current = state;
+            do
+            {
+                lock (current.Value)
+                {
+                    current.Value.Backpropagation(scoreToAdd, visitsToAdd);
+                }
+
+                current = current.Parent;
+            } while (current != null);
         }
 
         private INode<IState> TreeTraversal()
@@ -101,6 +129,39 @@ namespace MonteCarloTreeSearch.DecisionMaking.MonteCarloTreeSearch
             var bestNode = statesWithUCB1Score.OrderByDescending(state => state.UCB1).First().State;
 
             return bestNode;
+        }
+
+        private List<IGrouping<string, string>> GetTerminatingStatesGroup()
+        {
+            var nodesWithRolloutPerformed = _tree.Root.GetAllDescendants()
+                .Where(node => node.Value.HasRolloutBeenPerformed == true).ToList();
+
+            return nodesWithRolloutPerformed.Select(node => node.Value.RolloutTerminatingStateDetails)
+                .GroupBy(details => details).ToList();
+        }
+
+        private MonteCarloTreeSearchResults GetAlgorithmResults()
+        {
+            var invalidConstraints = _constraints.Where(constraint => !constraint.IsAlgorithmValid(this)).ToList();
+            var terminatingStatesGroup = GetTerminatingStatesGroup();
+
+            var actionFromParent = _tree.Root.Children.OrderByDescending(child => child.Value.Score).First().Value
+                .ActionFromParent;
+
+            return new MonteCarloTreeSearchResults(_tree.Root, actionFromParent, invalidConstraints,
+                terminatingStatesGroup);
+        }
+
+        public bool IsTreeTerminating()
+        {
+            if (!_tree.Root.Children.Any() && !_tree.Root.Value.IsTerminatingState())
+            {
+                return false;
+            }
+
+            return _tree.Root.Value.IsTerminatingState() || _tree.Root.GetAllDescendants()
+                .Where(descendant => !descendant.Children.Any())
+                .All(descendant => descendant.Value.IsTerminatingState());
         }
     }
 }
