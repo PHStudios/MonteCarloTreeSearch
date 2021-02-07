@@ -8,7 +8,7 @@ namespace MonteCarloTreeSearch.Extensions
     {
         public static T GetRandomValue<T>(this IList<T> source)
         {
-            var random = new Random();
+            var random = new Random(); // This is not thread safe and will be addressed in a later tutorial - EDUCATION PURPOSE
             return source[random.Next(source.Count)];
         }
     }
